@@ -2,10 +2,12 @@ import express from 'express'
 import jwt from 'jsonwebtoken'
 import mongoose, { mongo } from 'mongoose'
 import dotenv from 'dotenv'
+import cors from 'cors'
 dotenv.config()
 const app = express();
 const port = 3000;
 
+app.use(cors());
 app.use(express.json());
 const secretKey1 = process.env.secretKey1;
 const secretKey2 = process.env.secretKey2;
@@ -96,16 +98,24 @@ app.post('/admin/signup',async (req,res)=>{
     }
 });
 
-app.post('/admin/login',async (req,res)=>{
-    const {username,password} = req.headers;
-    const admin = await Admin.findOne({username,password});
-    if(admin){
-        const AdminToken = jwt.sign({username,role:'admin'},secretKey1,{expiresIn:'1h'});
-        res.json({message : `Admin logged in successfully`,token : AdminToken});
-    }else{
-        res.status(403).json({message : `Invalid username or password`});
+app.post('/admin/login', async (req, res) => {
+    const { username, password } = req.body;  // Extract from req.headers
+     
+    const admin = await Admin.findOne({ username, password });
+    if (admin) {
+      const AdminToken = jwt.sign({ username, role: 'admin' }, secretKey1, { expiresIn: '1h' });
+      res.json({ message: 'Admin logged in successfully', token: AdminToken });
+    } else {
+      res.status(403).json({ message: 'Invalid username or password' });
     }
-});
+  });
+
+  app.get('/admin/me',AuthJWTAdmin,(req,res)=>{
+    res.json({
+        username: req.user.username
+    })
+  })
+  
 
 app.post('/admin/course',AuthJWTAdmin,async(req,res)=>{
     const course = Course(req.body);
